@@ -80,8 +80,14 @@ function(ifx_mtb_autodiscovery)
     set(multiValueArgs PATH COMPONENTS DISABLE_COMPONENTS EXCLUDE)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${options}" "${oneValueArgs}" "${multiValueArgs}")
 
-    # Use absolute path
-    file(REAL_PATH "${ARG_PATH}" ARG_PATH)
+    # Use absolute paths. PATH is a list, so resolve each entry: file(REAL_PATH)
+    # on the whole list treats it as one path that does not exist.
+    set(ABS_PATHS "")
+    foreach(LOOKUP_PATH IN LISTS ARG_PATH)
+        file(REAL_PATH "${LOOKUP_PATH}" LOOKUP_PATH)
+        list(APPEND ABS_PATHS "${LOOKUP_PATH}")
+    endforeach()
+    set(ARG_PATH ${ABS_PATHS})
 
     # Detect target type to use PUBLIC or INTERFACE keyword
     get_target_property(TARGET_TYPE ${ARG_TARGET} TYPE)
