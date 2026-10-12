@@ -8,6 +8,15 @@
 include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
 
+# CMake 3.31+ (CMP0174): callers pass optional one-value arguments such as
+# LIB_PATCH_DIR from variables that may be empty. NEW keeps them as an empty
+# string, OLD unsets them; fetch_remote_library() reads both the same way, so
+# set NEW to stop the dev warning. include() scopes this to this file, and the
+# functions below keep it.
+if(POLICY CMP0174)
+    cmake_policy(SET CMP0174 NEW)
+endif()
+
 find_package(Git)
 
 # This function helps to handle options with an empty string values.
