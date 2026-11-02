@@ -361,6 +361,7 @@ static FIH_RET_TYPE(enum tfm_hal_status_t) ifx_protect_partition_assets(
 
 /* CUSTOM@NDRS: board cycfg hook (bcu_mv25 cycfg_system.c); absent on other boards */
 extern void tfm_uart_use_ns_alias(void) __attribute__((weak));
+extern void tfm_publish_reset_cause(void) __attribute__((weak));
 
 FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_set_up_static_boundaries(uintptr_t *p_spm_boundary)
 {
@@ -445,6 +446,11 @@ FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_set_up_static_boundaries(uintptr_t *
     TFM_COVERITY_DEVIATE_LINE(MISRA_C_2023_Rule_10_1, "Cannot change not equal logic due to Fault injection architecture and define FIH_NOT_EQ")
     if (FIH_NOT_EQ(fih_rc, TFM_HAL_SUCCESS)) {
         FIH_RET(TFM_HAL_ERROR_GENERIC);
+    }
+
+    /* CUSTOM@NDRS: the Non-Secure RAM is reachable now; hand the reset cause to the Non-Secure app */
+    if (tfm_publish_reset_cause != NULL) {
+        tfm_publish_reset_cause();
     }
     TFM_COVERITY_BLOCK_END(MISRA_C_2023_Rule_20_7)
     TFM_COVERITY_BLOCK_END(MISRA_C_2023_Rule_10_4)
