@@ -98,6 +98,11 @@ __attribute__((naked)) void IFX_IRQ_NAME_TO_HANDLER(IFX_TFM_MSC_IRQ)(void)
 TFM_COVERITY_DEVIATE_LINE(MISRA_C_2023_Rule_8_4, "This function prototype conforms to VECTOR_TABLE_Type, as declared in CMSIS system_Device.h")
 void ifx_fault_irq_handler(void)
 {
+#ifdef IFX_FAULTS_INFO_DUMP
+    /* CUSTOM@NDRS: the status is cleared below, so name the violating block now or it is lost */
+    ifx_faults_dump();
+#endif
+
     Cy_SysFault_ClearInterrupt(IFX_TFM_FAULT_STRUCT);
     Cy_SysFault_ClearStatus(IFX_TFM_FAULT_STRUCT);
 
