@@ -36,5 +36,11 @@ enum tfm_plat_err_t ifx_se_ipc_service_spm_shutdown(void)
         return TFM_PLAT_ERR_SUCCESS;
     }
 
+    /* CUSTOM@NDRS (bench): the SE survives a CM33 reset, so after a debugger reset or a panic it is still
+     * disabled from the previous boot. Already disabled is what this call wants, so accept it. */
+    if (IFX_SE_STATUS_CHECK(IFX_SE_DISABLED, status)) {
+        return TFM_PLAT_ERR_SUCCESS;
+    }
+
     return TFM_PLAT_ERR_SYSTEM_ERR;
 }

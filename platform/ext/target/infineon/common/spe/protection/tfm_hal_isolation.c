@@ -359,6 +359,9 @@ static FIH_RET_TYPE(enum tfm_hal_status_t) ifx_protect_partition_assets(
     FIH_RET(TFM_HAL_SUCCESS);
 }
 
+/* CUSTOM@NDRS: board cycfg hook (bcu_mv25 cycfg_system.c); absent on other boards */
+extern void tfm_uart_use_ns_alias(void) __attribute__((weak));
+
 FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_set_up_static_boundaries(uintptr_t *p_spm_boundary)
 {
     IFX_FIH_DECLARE(enum tfm_hal_status_t, fih_rc, TFM_HAL_ERROR_GENERIC);
@@ -431,6 +434,11 @@ FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_set_up_static_boundaries(uintptr_t *
     TFM_COVERITY_DEVIATE_LINE(MISRA_C_2023_Rule_10_1, "Cannot change not equal logic due to Fault injection architecture and define FIH_NOT_EQ")
     if (FIH_NOT_EQ(fih_rc, TFM_HAL_SUCCESS)) {
         FIH_RET(TFM_HAL_ERROR_GENERIC);
+    }
+
+    /* CUSTOM@NDRS: the log UART is Non-Secure from here on, so TF-M must use its Non-Secure alias */
+    if (tfm_uart_use_ns_alias != NULL) {
+        tfm_uart_use_ns_alias();
     }
 
     FIH_CALL(ifx_mpc_init_cfg, fih_rc);
