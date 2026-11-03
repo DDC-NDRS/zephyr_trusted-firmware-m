@@ -43,15 +43,16 @@
 
 /* Partition and service runtime data list head/runtime data table */
 static struct service_head_t services_listhead;
-struct service_t *stateless_services_ref_tbl[STATIC_HANDLE_NUM_LIMIT];
+struct service_t* stateless_services_ref_tbl[STATIC_HANDLE_NUM_LIMIT];
 
 /* Partition management functions */
 
 /* This API is only used in IPC backend. */
-#if CONFIG_TFM_SPM_BACKEND_IPC == 1
-struct connection_t *spm_get_async_replied_handle(struct partition_t *partition)
-{
-    struct connection_t **pr_handle_iter, **prev = NULL, *handle = NULL;
+#if (CONFIG_TFM_SPM_BACKEND_IPC == 1)
+struct connection_t* spm_get_async_replied_handle(struct partition_t* partition) {
+    struct connection_t** pr_handle_iter;
+    struct connection_t** prev   = NULL;
+    struct connection_t*  handle = NULL;
     struct critical_section_t cs_assert = CRITICAL_SECTION_STATIC_INIT;
 
     /* Remove tail of the list, which is the first item added */
@@ -59,8 +60,7 @@ struct connection_t *spm_get_async_replied_handle(struct partition_t *partition)
     if (!partition->p_replied) {
         tfm_core_panic();
     }
-    UNI_LIST_FOREACH_NODE_PNODE(pr_handle_iter, handle,
-                                partition, p_replied) {
+    UNI_LIST_FOREACH_NODE_PNODE(pr_handle_iter, handle, partition, p_replied) {
         prev = pr_handle_iter;
     }
     handle = *prev;
@@ -72,22 +72,20 @@ struct connection_t *spm_get_async_replied_handle(struct partition_t *partition)
     }
     CRITICAL_SECTION_LEAVE(cs_assert);
 
-    return handle;
+    return (handle);
 }
 
-struct connection_t *spm_get_handle_by_signal(struct partition_t *p_ptn,
-                                              psa_signal_t signal)
-{
-    struct connection_t *p_handle_iter = NULL;
-    struct connection_t **pr_handle_iter, **last_found_handle_holder = NULL;
-    struct critical_section_t cs_assert = CRITICAL_SECTION_STATIC_INIT;
+struct connection_t* spm_get_handle_by_signal(struct partition_t* p_ptn, psa_signal_t signal) {
+    struct connection_t* p_handle_iter = NULL;
+    struct connection_t** pr_handle_iter;
+    struct connection_t** last_found_handle_holder = NULL;
+    struct critical_section_t cs_assert     = CRITICAL_SECTION_STATIC_INIT;
     uint32_t nr_found_msgs = 0;
 
     CRITICAL_SECTION_ENTER(cs_assert);
 
     /* Return the last found message which applies a FIFO mechanism. */
-    UNI_LIST_FOREACH_NODE_PNODE(pr_handle_iter, p_handle_iter,
-                                p_ptn, p_reqs) {
+    UNI_LIST_FOREACH_NODE_PNODE(pr_handle_iter, p_handle_iter, p_ptn, p_reqs) {
         if (p_handle_iter->service->p_ldinf->signal == signal) {
             last_found_handle_holder = pr_handle_iter;
             nr_found_msgs++;
@@ -109,9 +107,9 @@ struct connection_t *spm_get_handle_by_signal(struct partition_t *p_ptn,
 }
 #endif /* CONFIG_TFM_SPM_BACKEND_IPC == 1 */
 
-const struct service_t *tfm_spm_get_service_by_sid(uint32_t sid)
-{
-    struct service_t *p_prev, *p_curr;
+const struct service_t* tfm_spm_get_service_by_sid(uint32_t sid) {
+    struct service_t* p_prev;
+    struct service_t* p_curr;
 
     UNI_LIST_FOREACH_NODE_PREV(p_prev, p_curr, &services_listhead, next) {
         if (p_curr->p_ldinf->sid == sid) {
@@ -125,56 +123,53 @@ const struct service_t *tfm_spm_get_service_by_sid(uint32_t sid)
 
 #if CONFIG_TFM_DOORBELL_API == 1
 /**
- * \brief                   Get the partition context by partition ID.
+ * \brief Get the partition context by partition ID.
  *
  * \param[in] partition_id  Partition identity
  *
- * \retval NULL             Failed
- * \retval "Not NULL"       Target partition context pointer,
- *                          \ref partition_t structures
+ * \retval NULL Failed
+ * \retval "Not NULL" Target partition context pointer,
+ *                    \ref partition_t structures
  */
-struct partition_t *tfm_spm_get_partition_by_id(int32_t partition_id)
-{
-    struct partition_t *p_part;
+struct partition_t* tfm_spm_get_partition_by_id(int32_t partition_id) {
+    struct partition_t* p_part;
 
     UNI_LIST_FOREACH(p_part, PARTITION_LIST_ADDR, next) {
         if (p_part->p_ldinf->pid == partition_id) {
-            return p_part;
+            return (p_part);
         }
     }
 
-    return NULL;
+    return (NULL);
 }
 #endif /* CONFIG_TFM_DOORBELL_API == 1 */
 
-int32_t tfm_spm_check_client_version(const struct service_t *service,
-                                     uint32_t version)
-{
+int32_t tfm_spm_check_client_version(const struct service_t* service, uint32_t version) {
     assert(service);
 
     switch (SERVICE_GET_VERSION_POLICY(service->p_ldinf->flags)) {
-    case SERVICE_VERSION_POLICY_RELAXED:
-        if (version > service->p_ldinf->version) {
+        case SERVICE_VERSION_POLICY_RELAXED :
+            if (version > service->p_ldinf->version) {
+                return SPM_ERROR_VERSION;
+            }
+            break;
+
+        case SERVICE_VERSION_POLICY_STRICT :
+            if (version != service->p_ldinf->version) {
+                return SPM_ERROR_VERSION;
+            }
+            break;
+
+        default :
             return SPM_ERROR_VERSION;
-        }
-        break;
-    case SERVICE_VERSION_POLICY_STRICT:
-        if (version != service->p_ldinf->version) {
-            return SPM_ERROR_VERSION;
-        }
-        break;
-    default:
-        return SPM_ERROR_VERSION;
     }
+
     return PSA_SUCCESS;
 }
 
-int32_t tfm_spm_check_authorization(uint32_t sid,
-                                    const struct service_t *service,
-                                    bool ns_caller)
-{
-    const struct partition_t *partition = NULL;
-    const uint32_t *dep;
+int32_t tfm_spm_check_authorization(uint32_t sid, const struct service_t* service, bool ns_caller) {
+    const struct partition_t* partition = NULL;
+    uint32_t const* dep;
     int32_t i;
 
     assert(service);
@@ -183,7 +178,8 @@ int32_t tfm_spm_check_authorization(uint32_t sid,
         if (!SERVICE_IS_NS_ACCESSIBLE(service->p_ldinf->flags)) {
             return SPM_ERROR_GENERIC;
         }
-    } else {
+    }
+    else {
         partition = GET_CURRENT_COMPONENT();
         if (!partition) {
             tfm_core_panic();
@@ -204,13 +200,12 @@ int32_t tfm_spm_check_authorization(uint32_t sid,
 }
 
 /* Message functions */
-psa_status_t spm_get_idle_connection(struct connection_t **p_connection,
-                                     psa_handle_t handle,
-                                     int32_t client_id)
-{
-    struct connection_t *connection;
-    const struct service_t *service;
-    uint32_t sid, version, index;
+psa_status_t spm_get_idle_connection(struct connection_t** p_connection, psa_handle_t handle, int32_t client_id) {
+    struct connection_t* connection;
+    const struct service_t* service;
+    uint32_t sid;
+    uint32_t version;
+    uint32_t index;
     int32_t psa_ret;
     bool ns_caller;
 
@@ -262,8 +257,9 @@ psa_status_t spm_get_idle_connection(struct connection_t **p_connection,
         }
 
         spm_init_idle_connection(connection, service, client_id);
-    } else {
-#if CONFIG_TFM_CONNECTION_BASED_SERVICE_API == 1
+    }
+    else {
+        #if (CONFIG_TFM_CONNECTION_BASED_SERVICE_API == 1)
         connection = handle_to_connection(handle);
         if (connection == NULL) {
             return PSA_ERROR_PROGRAMMER_ERROR;
@@ -290,9 +286,9 @@ psa_status_t spm_get_idle_connection(struct connection_t **p_connection,
             /* FixMe: Need to implement a mechanism to resolve this failure. */
             return PSA_ERROR_PROGRAMMER_ERROR;
         }
-#else
+        #else
         return PSA_ERROR_PROGRAMMER_ERROR;
-#endif
+        #endif
     }
 
     *p_connection = connection;
@@ -300,8 +296,7 @@ psa_status_t spm_get_idle_connection(struct connection_t **p_connection,
     return PSA_SUCCESS;
 }
 
-struct connection_t *spm_msg_handle_to_connection(psa_handle_t msg_handle)
-{
+struct connection_t* spm_msg_handle_to_connection(psa_handle_t msg_handle) {
     /*
      * The message handler passed by the caller is considered invalid in the
      * following cases:
@@ -312,7 +307,7 @@ struct connection_t *spm_msg_handle_to_connection(psa_handle_t msg_handle)
      * Check the conditions above
      */
     int32_t partition_id;
-    struct connection_t *p_conn_handle = handle_to_connection(msg_handle);
+    struct connection_t* p_conn_handle = handle_to_connection(msg_handle);
 
     if (spm_validate_connection(p_conn_handle) != PSA_SUCCESS) {
         return NULL;
@@ -327,47 +322,45 @@ struct connection_t *spm_msg_handle_to_connection(psa_handle_t msg_handle)
     return p_conn_handle;
 }
 
-void spm_init_idle_connection(struct connection_t *p_connection,
-                              const struct service_t *service,
-                              int32_t client_id)
-{
+void spm_init_idle_connection(struct connection_t* p_connection,
+                              const struct service_t* service,
+                              int32_t client_id) {
     assert(p_connection);
     assert(service);
 
     /* Clear message buffer before using it */
     spm_memset(&p_connection->msg, 0, sizeof(psa_msg_t));
 
-    p_connection->service = service;
-    p_connection->p_client = GET_CURRENT_COMPONENT();
+    p_connection->service       = service;
+    p_connection->p_client      = GET_CURRENT_COMPONENT();
     p_connection->msg.client_id = client_id;
     /* Use the user connect handle as the message handle */
     p_connection->msg.handle = connection_to_handle(p_connection);
 
     p_connection->status = TFM_HANDLE_STATUS_IDLE;
-#if PSA_FRAMEWORK_HAS_MM_IOVEC
+    #if PSA_FRAMEWORK_HAS_MM_IOVEC
     p_connection->iovec_status = 0;
-#endif
+    #endif
 
-#ifdef TFM_PARTITION_NS_AGENT_MAILBOX
+    #ifdef TFM_PARTITION_NS_AGENT_MAILBOX
     p_connection->client_data = NULL;
-#endif
+    #endif
 }
 
-int32_t tfm_spm_partition_get_running_partition_id(void)
-{
-    const struct partition_t *partition;
+int32_t tfm_spm_partition_get_running_partition_id(void) {
+    const struct partition_t* partition;
 
     partition = GET_CURRENT_COMPONENT();
     if (partition && partition->p_ldinf) {
         return partition->p_ldinf->pid;
-    } else {
+    }
+    else {
         return INVALID_PARTITION_ID;
     }
 }
 
-bool tfm_spm_is_ns_caller(void)
-{
-    const struct partition_t *partition = GET_CURRENT_COMPONENT();
+bool tfm_spm_is_ns_caller(void) {
+    const struct partition_t* partition = GET_CURRENT_COMPONENT();
 
     if (!partition) {
         tfm_core_panic();
@@ -376,13 +369,13 @@ bool tfm_spm_is_ns_caller(void)
     return IS_NS_AGENT(partition->p_ldinf);
 }
 
-int32_t tfm_spm_get_client_id(bool ns_caller)
-{
+int32_t tfm_spm_get_client_id(bool ns_caller) {
     int32_t client_id;
 
     if (ns_caller) {
         client_id = tfm_nspm_get_current_client_id();
-    } else {
+    }
+    else {
         client_id = tfm_spm_partition_get_running_partition_id();
     }
 
@@ -394,11 +387,11 @@ int32_t tfm_spm_get_client_id(bool ns_caller)
     return client_id;
 }
 
-uint32_t tfm_spm_init(void)
-{
-    struct partition_t *partition;
+uint32_t /**/tfm_spm_init(void) {
+    struct partition_t* partition;
     uint32_t service_setting;
     FIH_DECLARE(fih_rc, FIH_FAILURE);
+    uint32_t ret;
 
     spm_init_connection_space();
 
@@ -432,7 +425,7 @@ uint32_t tfm_spm_init(void)
         backend_init_comp_assuredly(partition, service_setting);
     }
 
-#if CONFIG_TFM_POST_PARTITION_INIT_HOOK == 1
+    #if (CONFIG_TFM_POST_PARTITION_INIT_HOOK == 1)
     /*
      * Platform can use CONFIG_TFM_POST_PARTITION_INIT_HOOK option to add extra initialization
      * steps after static initialization of partitions' isolation has been completed.
@@ -441,7 +434,9 @@ uint32_t tfm_spm_init(void)
     if (FIH_NOT_EQ(fih_rc, TFM_HAL_SUCCESS)) {
         tfm_core_panic();
     }
-#endif /* CONFIG_TFM_POST_PARTITION_INIT_HOOK == 1 */
+    #endif /* CONFIG_TFM_POST_PARTITION_INIT_HOOK == 1 */
 
-    return backend_system_run();
+    ret = backend_system_run();
+
+    return (ret);
 }

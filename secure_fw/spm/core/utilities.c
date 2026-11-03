@@ -18,32 +18,33 @@
 #include "backtrace.h"
 #endif
 
-void tfm_core_panic(void)
-{
-    (void)fih_delay();
-#ifdef CONFIG_TFM_BACKTRACE_ON_CORE_PANIC
-    tfm_dump_backtrace(__func__, tfm_log);
-#endif
+void tfm_core_panic(void) {
+    (void) fih_delay();
 
-/* Suppress Pe111 (statement is unreachable) and Pe128 (loop is unreachable) for
- * IAR as redundant code is needed for FIH
- */
-#if defined(__ICCARM__)
-#pragma diag_suppress = Pe111
-#pragma diag_suppress = Pe128
-#endif
-#ifdef CONFIG_TFM_HALT_ON_CORE_PANIC
+    #ifdef CONFIG_TFM_BACKTRACE_ON_CORE_PANIC
+    tfm_dump_backtrace(__func__, tfm_log);
+    #endif
+
+    /* Suppress Pe111 (statement is unreachable) and Pe128 (loop is unreachable) for
+     * IAR as redundant code is needed for FIH
+     */
+    #if defined(__ICCARM__)
+    #pragma diag_suppress = Pe111
+    #pragma diag_suppress = Pe128
+    #endif
+
+    #ifdef CONFIG_TFM_HALT_ON_CORE_PANIC
     /*
      * Halt instead of reboot to retain the backtrace that triggered
      * the fault and thereby make it easier to debug.
      */
     tfm_hal_system_halt();
-#ifdef TFM_FIH_PROFILE_ON
-    (void)fih_delay();
+    #ifdef TFM_FIH_PROFILE_ON
+    (void) fih_delay();
 
     tfm_hal_system_halt();
-#endif /* TFM_FIH_PROFILE_ON */
-#else /* CONFIG_TFM_HALT_ON_CORE_PANIC */
+    #endif /* TFM_FIH_PROFILE_ON */
+    #else /* CONFIG_TFM_HALT_ON_CORE_PANIC */
     /*
      * FixMe: In the first stage, the SPM will restart the entire system when a
      * programmer error is detected in either the SPE or NSPE.
@@ -53,20 +54,20 @@ void tfm_core_panic(void)
      * functionality for terminating an execution context.
      */
     tfm_hal_system_reset(TFM_PLAT_SWSYN_DEFAULT);
-#ifdef TFM_FIH_PROFILE_ON
-    (void)fih_delay();
+    #ifdef TFM_FIH_PROFILE_ON
+    (void) fih_delay();
 
     tfm_hal_system_reset(TFM_PLAT_SWSYN_DEFAULT);
-#endif /* TFM_FIH_PROFILE_ON */
-#endif /* CONFIG_TFM_HALT_ON_CORE_PANIC */
+    #endif /* TFM_FIH_PROFILE_ON */
+    #endif /* CONFIG_TFM_HALT_ON_CORE_PANIC */
 
-#if defined(__ICCARM__)
+    #if defined(__ICCARM__)
     while (1) {
         __NOP();
     }
-#pragma diag_default = Pe111
-#pragma diag_default = Pe128
-#else
+    #pragma diag_default = Pe111
+    #pragma diag_default = Pe128
+    #else
     __builtin_unreachable();
-#endif
+    #endif
 }

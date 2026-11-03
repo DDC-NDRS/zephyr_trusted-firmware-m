@@ -49,8 +49,7 @@ uint32_t scheduler_lock = SCHEDULER_UNLOCKED;
 #if CONFIG_TFM_SPM_BACKEND_IPC == 1
 
 __naked
-void tfm_arch_thread_fn_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3)
-{
+void tfm_arch_thread_fn_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) {
     __asm volatile(
         "   push    {r4-r6, lr}             \n"
         "   push    {r0-r4, r12}            \n"
@@ -96,15 +95,14 @@ void tfm_arch_thread_fn_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3)
 #endif /* CONFIG_TFM_SPM_BACKEND_IPC == 1*/
 
 #if CONFIG_TFM_SPM_BACKEND_IPC == 1
-__attribute__((naked)) void PendSV_Handler(void)
-{
+__attribute__((naked)) void PendSV_Handler(void) {
     __ASM volatile(
         SYNTAX_UNIFIED
         "   movs    r0, #"M2S(EXC_RETURN_S)"            \n"
         "   ands    r0, lr                              \n" /* NS interrupted */
-#if CONFIG_TFM_SCHEDULE_WHEN_NS_INTERRUPTED == 0
+        #if (CONFIG_TFM_SCHEDULE_WHEN_NS_INTERRUPTED == 0)
         "   beq     v8m_pendsv_exit                     \n" /* No schedule */
-#endif
+        #endif
         "   push    {r0, lr}                            \n" /* Save R0, LR */
         "   mov     r0, lr                              \n" /* Pass the EXC_RETURN value as
                                                              * parameter
@@ -116,9 +114,9 @@ __attribute__((naked)) void PendSV_Handler(void)
         "   cpsid   i                                   \n"
         "   isb                                         \n"
         "   mrs     r2, psp                             \n"
-#if (CONFIG_TFM_FLOAT_ABI >= 1)
+        #if (CONFIG_TFM_FLOAT_ABI >= 1)
         "   vstmdb  r2!, {s16-s31}                      \n" /* Store s16-s31. */
-#endif
+        #endif
         "   ands    r3, lr, #"M2S(EXC_RETURN_DCRS)"     \n" /* Check DCRS */
         "   itt     ne                                  \n" /* Skip saving callee */
         "   stmdbne r2!, {r4-r11}                       \n" /* Save callee */
@@ -139,9 +137,9 @@ __attribute__((naked)) void PendSV_Handler(void)
                                                              * integrity signature
                                                              */
         "   ldmiane r2!, {r4-r11}                       \n" /* Load callee */
-#if (CONFIG_TFM_FLOAT_ABI >= 1)
+        #if (CONFIG_TFM_FLOAT_ABI >= 1)
         "   vldmia  r2!, {s16-s31}                      \n" /* Load s16-s31. */
-#endif
+        #endif
         "   ldr     r3, [r1]                            \n" /* Load sp_limit */
         "   msr     psp, r2                             \n"
         "   msr     psplim, r3                          \n"
@@ -153,8 +151,7 @@ __attribute__((naked)) void PendSV_Handler(void)
 }
 #endif
 
-__attribute__((naked)) void SVC_Handler(void)
-{
+__attribute__((naked)) void SVC_Handler(void) {
     __ASM volatile(
     SYNTAX_UNIFIED
     "MRS     r0, MSP                         \n"
@@ -177,9 +174,9 @@ __attribute__((naked)) void SVC_Handler(void)
                                                   */
     "BX      lr                              \n"
     "to_flih_func:                           \n"
-#if (CONFIG_TFM_FLOAT_ABI >= 1)
+    #if (CONFIG_TFM_FLOAT_ABI >= 1)
     "VPUSH   {s16-s31}                       \n" /* Save callee FPU registers */
-#endif
+    #endif
     "ANDS    r3, lr, #"M2S(EXC_RETURN_DCRS)" \n" /* Check DCRS */
     "ITT     ne                              \n" /* Skip saving callee */
     "PUSHNE  {r4-r11}                        \n" /* Save callee */
@@ -210,9 +207,9 @@ __attribute__((naked)) void SVC_Handler(void)
                                                   * integrity signature
                                                   */
     "POPNE   {r4-r11}                        \n" /* Load callee */
-#if (CONFIG_TFM_FLOAT_ABI >= 1)
+    #if (CONFIG_TFM_FLOAT_ABI >= 1)
     "VPOP    {s16-s31}                       \n" /* Load callee FPU registers */
-#endif
+    #endif
     "ADD     sp, #16                         \n" /*
                                                   * "Unstack" unused orig_exc_return, dummy,
                                                   * PSP, PSPLIM pushed by the previous
@@ -222,10 +219,9 @@ __attribute__((naked)) void SVC_Handler(void)
     );
 }
 
-void tfm_arch_set_secure_exception_priorities(void)
-{
+void tfm_arch_set_secure_exception_priorities(void) {
     uint32_t VECTKEY;
-    SCB_Type *scb = SCB;
+    SCB_Type* scb = SCB;
     uint32_t AIRCR;
 
     /* Set PRIS flag in AIRCR */
@@ -234,6 +230,7 @@ void tfm_arch_set_secure_exception_priorities(void)
     scb->AIRCR = SCB_AIRCR_PRIS_Msk |
                  VECTKEY |
                  (AIRCR & ~SCB_AIRCR_VECTKEY_Msk);
+
     /* Set fault priority to less than 0x80 (with AIRCR.PRIS set) to prevent
      * Non-secure from pre-empting faults that may indicate corruption of Secure
      * state.
@@ -241,8 +238,8 @@ void tfm_arch_set_secure_exception_priorities(void)
     NVIC_SetPriority(MemoryManagement_IRQn, MemoryManagement_IRQnLVL);
     NVIC_SetPriority(BusFault_IRQn, BusFault_IRQnLVL);
     NVIC_SetPriority(SecureFault_IRQn, SecureFault_IRQnLVL);
-
     NVIC_SetPriority(SVCall_IRQn, SVCall_IRQnLVL);
+
     /*
      * Set secure PendSV priority to the lowest in SECURE state.
      */
@@ -250,44 +247,48 @@ void tfm_arch_set_secure_exception_priorities(void)
 }
 
 #ifdef TFM_FIH_PROFILE_ON
-FIH_RET_TYPE(int32_t) tfm_arch_verify_secure_exception_priorities(void)
-{
-    SCB_Type *scb = SCB;
+FIH_RET_TYPE(int32_t) tfm_arch_verify_secure_exception_priorities(void) {
+    SCB_Type* scb = SCB;
 
     if ((scb->AIRCR & SCB_AIRCR_PRIS_Msk) != SCB_AIRCR_PRIS_Msk) {
         FIH_RET(FIH_FAILURE);
     }
-    (void)fih_delay();
+    (void) fih_delay();
+
     if ((scb->AIRCR & SCB_AIRCR_PRIS_Msk) != SCB_AIRCR_PRIS_Msk) {
         FIH_RET(FIH_FAILURE);
     }
+
     if (FIH_NOT_EQ(NVIC_GetPriority(MemoryManagement_IRQn),
-                  MemoryManagement_IRQnLVL)) {
+                   MemoryManagement_IRQnLVL)) {
         FIH_RET(FIH_FAILURE);
     }
+
     if (FIH_NOT_EQ(NVIC_GetPriority(BusFault_IRQn),
-                  BusFault_IRQnLVL)) {
+                   BusFault_IRQnLVL)) {
         FIH_RET(FIH_FAILURE);
     }
+
     if (FIH_NOT_EQ(NVIC_GetPriority(SecureFault_IRQn),
-                  SecureFault_IRQnLVL)) {
+                   SecureFault_IRQnLVL)) {
         FIH_RET(FIH_FAILURE);
     }
+
     if (FIH_NOT_EQ(NVIC_GetPriority(SVCall_IRQn),
-                  SVCall_IRQnLVL)) {
+                   SVCall_IRQnLVL)) {
         FIH_RET(FIH_FAILURE);
     }
+
     if (FIH_NOT_EQ(NVIC_GetPriority(PendSV_IRQn),
-                  PENDSV_PRIO_FOR_SCHED)) {
+                   PENDSV_PRIO_FOR_SCHED)) {
         FIH_RET(FIH_FAILURE);
     }
     FIH_RET(FIH_SUCCESS);
 }
 #endif
 
-void tfm_arch_config_extensions(void)
-{
-#if defined(CONFIG_TFM_ENABLE_CP10CP11)
+void tfm_arch_config_extensions(void) {
+    #if defined(CONFIG_TFM_ENABLE_CP10CP11)
     /*
      * Enable privileged and unprivileged access to the FP Extension for SPE and
      * NSPE located on the same core. Both SPE and NSPE must enable FPU for proper
@@ -295,40 +296,41 @@ void tfm_arch_config_extensions(void)
      * NSPE is located in other core than SPE core, FPU must be enabled there only
      * if it is used
      */
-    SCB->CPACR    |= (3U << 10U*2U)    /* enable CP10 full access for SPE */
-                  | (3U << 11U*2U);    /* enable CP11 full access for SPE */
-    SCB_NS->CPACR |= (3U << 10U*2U)    /* enable CP10 full access for NSPE */
-                  |  (3U << 11U*2U);   /* enable CP11 full access for NSPE */
+    SCB->CPACR |= ((3U << 10U * 2U) |       /* enable CP10 full access for SPE */
+                   (3U << 11U * 2U));       /* enable CP11 full access for SPE */
+    SCB_NS->CPACR |= ((3U << 10U * 2U) |    /* enable CP10 full access for NSPE */
+                      (3U << 11U * 2U));    /* enable CP11 full access for NSPE */
     __DSB();
     __ISB();
+
     /*
      * Permit Non-secure access to the Floating-point Extension.
      */
     SCB->NSACR |= SCB_NSACR_CP10_Msk | SCB_NSACR_CP11_Msk;
-#elif defined(CONFIG_TFM_DISABLE_CP10CP11)
+    #elif defined(CONFIG_TFM_DISABLE_CP10CP11)
     /*
      * Disable privileged and unprivileged access to the FP Extension for SPE and
      * NSPE located on the same core.
      */
-    SCB->CPACR    &= ~((3U << 10U*2U)     /* disable CP10 full access for SPE */
-                     | (3U << 11U*2U));   /* disable CP11 full access for SPE */
-    SCB_NS->CPACR &= ~((3U << 10U*2U)     /* disable CP10 full access for NSPE */
-                     | (3U << 11U*2U));   /* disable CP11 full access for NSPE */
+    SCB->CPACR &= ~((3U << 10U * 2U) |      /* disable CP10 full access for SPE */
+                    (3U << 11U * 2U));      /* disable CP11 full access for SPE */
+    SCB_NS->CPACR &= ~((3U << 10U * 2U) |   /* disable CP10 full access for NSPE */
+                       (3U << 11U * 2U));   /* disable CP11 full access for NSPE */
     __DSB();
     __ISB();
 
     /* Disable Non-secure access to the Floating-point Extension. */
     SCB->NSACR &= ~(SCB_NSACR_CP10_Msk | SCB_NSACR_CP11_Msk);
-#endif /* defined(CONFIG_TFM_ENABLE_CP10CP11) */
+    #endif /* defined(CONFIG_TFM_ENABLE_CP10CP11) */
 
-#if (CONFIG_TFM_FLOAT_ABI >= 1)
-#ifdef CONFIG_TFM_LAZY_STACKING
+    #if (CONFIG_TFM_FLOAT_ABI >= 1)
+    #ifdef CONFIG_TFM_LAZY_STACKING
     /* Enable lazy stacking. */
     FPU->FPCCR |= FPU_FPCCR_LSPEN_Msk;
-#else
+    #else
     /* Disable lazy stacking. */
     FPU->FPCCR &= ~FPU_FPCCR_LSPEN_Msk;
-#endif
+    #endif
 
     /*
      * If the SPE will ever use the floating-point registers for sensitive
@@ -339,26 +341,26 @@ void tfm_arch_config_extensions(void)
      * if the SPE will never use floating-point but enables the FPU only for
      * avoiding NOCP faults during interrupted NSPE to SPE calls.
      */
-    FPU->FPCCR |= FPU_FPCCR_ASPEN_Msk
-                  | FPU_FPCCR_TS_Msk
-                  | FPU_FPCCR_CLRONRET_Msk
-                  | FPU_FPCCR_CLRONRETS_Msk
-                  | FPU_FPCCR_LSPENS_Msk;
+    FPU->FPCCR |= (FPU_FPCCR_ASPEN_Msk |
+                   FPU_FPCCR_TS_Msk    |
+                   FPU_FPCCR_CLRONRET_Msk  |
+                   FPU_FPCCR_CLRONRETS_Msk |
+                   FPU_FPCCR_LSPENS_Msk);
 
     /* Prevent non-secure from modifying FPU’s power setting. */
-#if defined(__ARM_ARCH_8_1M_MAIN__) && (__ARM_ARCH_8_1M_MAIN__ == 1)
+    #if defined(__ARM_ARCH_8_1M_MAIN__) && (__ARM_ARCH_8_1M_MAIN__ == 1)
     ICB->CPPWR |= ICB_CPPWR_SUS11_Msk | ICB_CPPWR_SUS10_Msk;
-#else
+    #else
     SCnSCB->CPPWR |= SCnSCB_CPPWR_SUS11_Msk | SCnSCB_CPPWR_SUS10_Msk;
-#endif
-#endif /* CONFIG_TFM_FLOAT_ABI >= 1 */
+    #endif
+    #endif /* CONFIG_TFM_FLOAT_ABI >= 1 */
 
-#if defined(__ARM_ARCH_8_1M_MAIN__) && (__ARM_ARCH_8_1M_MAIN__ == 1) && \
-    (TFM_TZ_REENTRANCY_CHECK == 0)
+    #if defined(__ARM_ARCH_8_1M_MAIN__) && (__ARM_ARCH_8_1M_MAIN__ == 1) && \
+        (TFM_TZ_REENTRANCY_CHECK == 0)
     SCB->CCR |= SCB_CCR_TRD_Msk;
-#endif
+    #endif
 
-#if defined(__ARM_ARCH_8_1M_MAIN__) && (__ARM_ARCH_8_1M_MAIN__ == 1)
+    #if defined(__ARM_ARCH_8_1M_MAIN__) && (__ARM_ARCH_8_1M_MAIN__ == 1)
     /*
      * \note Set Data Independent Timing (DIT) bit in AIRCR_S. This makes sure
      *       that instructions which might have variable duration based on the
@@ -369,26 +371,25 @@ void tfm_arch_config_extensions(void)
      *       write is ignored
      */
     SCB->AIRCR |= SCB_AIRCR_DIT_Msk;
-#endif
+    #endif
 }
 
 #if (CONFIG_TFM_FLOAT_ABI > 0)
-__attribute__((naked, noinline, used)) void tfm_arch_clear_fp_data(void)
-{
+__attribute__((naked, noinline, used)) void tfm_arch_clear_fp_data(void) {
     __ASM volatile(
                     "eor  r0, r0, r0         \n"
                     "vmsr fpscr, r0          \n"
-#if (defined(__ARM_ARCH_8_1M_MAIN__))
-/* IAR throws an error if the S0-S31 syntax is used.
- * Splitting the command into two parts solved the issue.
- */
-#if defined(__ICCARM__)
+                    #if (defined(__ARM_ARCH_8_1M_MAIN__))
+                    /* IAR throws an error if the S0-S31 syntax is used.
+                     * Splitting the command into two parts solved the issue.
+                     */
+                    #if defined(__ICCARM__)
                     "vscclrm {s0-s30,vpr}    \n"
                     "vscclrm {s31,vpr}       \n"
-#else
+                    #else
                     "vscclrm {s0-s31,vpr}    \n"
-#endif
-#else
+                    #endif
+                    #else
                     "vmov s0, r0             \n"
                     "vmov s1, r0             \n"
                     "vmov s2, r0             \n"
@@ -421,7 +422,7 @@ __attribute__((naked, noinline, used)) void tfm_arch_clear_fp_data(void)
                     "vmov s29, r0            \n"
                     "vmov s30, r0            \n"
                     "vmov s31, r0            \n"
-#endif
+                    #endif
                     "bx   lr                 \n"
                   );
 }

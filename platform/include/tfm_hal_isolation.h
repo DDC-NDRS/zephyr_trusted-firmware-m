@@ -22,15 +22,15 @@ extern "C" {
 #endif
 
 /* Memory access attributes */
-#define TFM_HAL_ACCESS_EXECUTABLE       (1UL << 0)
-#define TFM_HAL_ACCESS_READABLE         (1UL << 1)
-#define TFM_HAL_ACCESS_WRITABLE         (1UL << 2)
-#define TFM_HAL_ACCESS_UNPRIVILEGED     (1UL << 3)
-#define TFM_HAL_ACCESS_DEVICE           (1UL << 4)
-#define TFM_HAL_ACCESS_NS               (1UL << 5)
+#define TFM_HAL_ACCESS_EXECUTABLE   (1UL << 0)
+#define TFM_HAL_ACCESS_READABLE     (1UL << 1)
+#define TFM_HAL_ACCESS_WRITABLE     (1UL << 2)
+#define TFM_HAL_ACCESS_UNPRIVILEGED (1UL << 3)
+#define TFM_HAL_ACCESS_DEVICE       (1UL << 4)
+#define TFM_HAL_ACCESS_NS           (1UL << 5)
 
-#define TFM_HAL_ACCESS_READWRITE  \
-        (TFM_HAL_ACCESS_READABLE | TFM_HAL_ACCESS_WRITABLE)
+#define TFM_HAL_ACCESS_READWRITE \
+    (TFM_HAL_ACCESS_READABLE | TFM_HAL_ACCESS_WRITABLE)
 
 #ifdef TFM_FIH_PROFILE_ON
 
@@ -54,8 +54,8 @@ fih_ret tfm_hal_verify_static_boundaries(void);
  * \return TFM_HAL_SUCCESS - the isolation boundaries have been set up.
  *         TFM_HAL_ERROR_GENERIC - failed to set up the isolation boundaries.
  */
-FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_set_up_static_boundaries(
-                                                uintptr_t *p_spm_boundary);
+FIH_RET_TYPE(enum tfm_hal_status_t)
+tfm_hal_set_up_static_boundaries(uintptr_t* p_spm_boundary);
 
 /**
  * \brief  Activate one Secure Partition boundary.
@@ -66,9 +66,9 @@ FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_set_up_static_boundaries(
  * \return TFM_HAL_SUCCESS          The isolation boundaries update succeeded.
  *         TFM_HAL_ERROR_GENERIC    Failed to update the isolation boundaries.
  */
-FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_activate_boundary(
-                            const struct partition_load_info_t *p_ldinf,
-                            uintptr_t boundary);
+FIH_RET_TYPE(enum tfm_hal_status_t)
+tfm_hal_activate_boundary(const struct partition_load_info_t* p_ldinf,
+                          uintptr_t boundary);
 
 /**
  * \brief  This API checks if a given range of memory can be accessed with
@@ -88,9 +88,9 @@ FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_activate_boundary(
  *         TFM_HAL_ERROR_INVALID_INPUT - Invalid inputs.
  *         TFM_HAL_ERROR_GENERIC - An error occurred.
  */
-FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_memory_check(
-                                           uintptr_t boundary, uintptr_t base,
-                                           size_t size, uint32_t access_type);
+FIH_RET_TYPE(enum tfm_hal_status_t)
+tfm_hal_memory_check(uintptr_t boundary, uintptr_t base,
+                     size_t size, uint32_t access_type);
 
 /**
  * \brief  This API binds partition boundaries with the platform. The platform
@@ -110,9 +110,9 @@ FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_memory_check(
  * \return TFM_HAL_SUCCESS          - A platform value bound successfully.
  *         TFM_HAL_ERROR_GENERIC    - Error occurred while binding.
  */
-FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_bind_boundary(
-                                    const struct partition_load_info_t *p_ldinf,
-                                    uintptr_t *p_boundary);
+FIH_RET_TYPE(enum tfm_hal_status_t)
+tfm_hal_bind_boundary(const struct partition_load_info_t* p_ldinf,
+                      uintptr_t* p_boundary);
 
 /**
  * \brief  This API let the platform decide if a boundary switch is needed.

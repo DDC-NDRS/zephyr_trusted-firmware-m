@@ -70,19 +70,19 @@ static const struct boot_data_access_policy access_policy_table[] = {
      * IAR won't accept zero element array definition, so an invalid element
      * is always defined here.
      */
-    {INVALID_PARTITION_ID, TLV_MAJOR_INVALID},
-#ifdef TFM_PARTITION_INITIAL_ATTESTATION
-    {TFM_SP_INITIAL_ATTESTATION, TLV_MAJOR_IAS},
-#endif
-#ifdef TFM_PARTITION_FIRMWARE_UPDATE
-    {TFM_SP_FWU, TLV_MAJOR_FWU},
-#endif
-#ifdef TFM_PARTITION_MEASURED_BOOT
-    {TFM_SP_MEASURED_BOOT, TLV_MAJOR_MBS},
-#endif
-#ifdef TFM_PARTITION_DPE
-    {TFM_SP_DPE, TLV_MAJOR_MBS},
-#endif
+    {INVALID_PARTITION_ID,       TLV_MAJOR_INVALID},
+    #ifdef TFM_PARTITION_INITIAL_ATTESTATION
+    {TFM_SP_INITIAL_ATTESTATION, TLV_MAJOR_IAS    },
+    #endif
+    #ifdef TFM_PARTITION_FIRMWARE_UPDATE
+    {TFM_SP_FWU,                 TLV_MAJOR_FWU    },
+    #endif
+    #ifdef TFM_PARTITION_MEASURED_BOOT
+    {TFM_SP_MEASURED_BOOT,       TLV_MAJOR_MBS    },
+    #endif
+    #ifdef TFM_PARTITION_DPE
+    {TFM_SP_DPE,                 TLV_MAJOR_MBS    },
+    #endif
 };
 
 /*!
@@ -93,12 +93,11 @@ static const struct boot_data_access_policy access_policy_table[] = {
  *
  * \return  Returns 0 in case of success, otherwise -1.
  */
-static int32_t tfm_core_check_boot_data_access_policy(uint8_t major_type)
-{
+static int32_t tfm_core_check_boot_data_access_policy(uint8_t major_type) {
     int32_t partition_id;
     uint32_t i;
     int32_t rc = -1;
-    const uint32_t array_size = ARRAY_SIZE(access_policy_table);
+    uint32_t const array_size = ARRAY_SIZE(access_policy_table);
 
     partition_id = tfm_spm_partition_get_running_partition_id();
 
@@ -119,19 +118,18 @@ static int32_t tfm_core_check_boot_data_access_policy(uint8_t major_type)
     return rc;
 }
 
-void tfm_core_validate_boot_data(void)
-{
-#ifdef BOOT_DATA_AVAILABLE
-    struct tfm_boot_data *boot_data;
-    const uintptr_t data_base = tfm_plat_get_shared_measurement_data_base();
-    const size_t data_size = tfm_plat_get_shared_measurement_data_size();
+void tfm_core_validate_boot_data(void) {
+    #ifdef BOOT_DATA_AVAILABLE
+    struct tfm_boot_data* boot_data;
+    uintptr_t const data_base = tfm_plat_get_shared_measurement_data_base();
+    size_t const data_size = tfm_plat_get_shared_measurement_data_size();
 
     if (data_size < SHARED_DATA_HEADER_SIZE) {
         /* Data does not contain valid header */
         return;
     }
 
-#if defined(NS_DATA_START) && defined(NS_DATA_LIMIT)
+    #if defined(NS_DATA_START) && defined(NS_DATA_LIMIT)
     const uintptr_t data_limit = data_base + data_size - 1;
 
     /* Test for ordering and overlapping */
@@ -141,31 +139,31 @@ void tfm_core_validate_boot_data(void)
         /* Not setting BOOT_DATA_VALID */
         return;
     }
-#endif /* defined (NS_DATA_START) && defined (NS_DATA_LIMIT) */
+    #endif /* defined (NS_DATA_START) && defined (NS_DATA_LIMIT) */
 
-    boot_data = (struct tfm_boot_data *)data_base;
+    boot_data = (struct tfm_boot_data*)data_base;
 
     if (boot_data->header.tlv_magic == SHARED_DATA_TLV_INFO_MAGIC) {
         is_boot_data_valid = BOOT_DATA_VALID;
     }
-#else
+    #else
     is_boot_data_valid = BOOT_DATA_VALID;
-#endif /* BOOT_DATA_AVAILABLE */
+    #endif /* BOOT_DATA_AVAILABLE */
 }
 
-void tfm_core_get_boot_data_handler(uint32_t args[])
-{
-    uint8_t  tlv_major = (uint8_t)args[0];
-    uint8_t *buf_start = (uint8_t *)args[1];
+void tfm_core_get_boot_data_handler(uint32_t args[]) {
+    uint8_t tlv_major  = (uint8_t)args[0];
+    uint8_t* buf_start = (uint8_t*)args[1];
     uint16_t buf_size  = (uint16_t)args[2];
-    struct tfm_boot_data *boot_data;
-#ifdef BOOT_DATA_AVAILABLE
-    uint8_t *ptr;
+    struct tfm_boot_data* boot_data;
+    #ifdef BOOT_DATA_AVAILABLE
+    uint8_t* ptr;
     struct shared_data_tlv_entry tlv_entry;
-    uintptr_t tlv_end, offset;
+    uintptr_t tlv_end;
+    uintptr_t offset;
     size_t next_tlv_offset = 0;
-#endif /* BOOT_DATA_AVAILABLE */
-    const struct partition_t *curr_partition = GET_CURRENT_COMPONENT();
+    #endif /* BOOT_DATA_AVAILABLE */
+    const struct partition_t* curr_partition = GET_CURRENT_COMPONENT();
     FIH_DECLARE(fih_rc, FIH_FAILURE);
 
     FIH_CALL(tfm_hal_memory_check, fih_rc,
@@ -187,12 +185,12 @@ void tfm_core_get_boot_data_handler(uint32_t args[])
         return;
     }
 
-#ifdef BOOT_DATA_AVAILABLE
+    #ifdef BOOT_DATA_AVAILABLE
     const uintptr_t data_base = tfm_plat_get_shared_measurement_data_base();
-    const size_t boot_data_size = tfm_plat_get_shared_measurement_data_size();
+    size_t const boot_data_size = tfm_plat_get_shared_measurement_data_size();
 
     /* Get the boundaries of TLV section */
-    boot_data = (struct tfm_boot_data *)data_base;
+    boot_data = (struct tfm_boot_data*)data_base;
     tlv_end = data_base + boot_data->header.tlv_tot_len;
 
     if ((size_t)boot_data->header.tlv_tot_len > boot_data_size) {
@@ -201,28 +199,30 @@ void tfm_core_get_boot_data_handler(uint32_t args[])
     }
 
     offset = data_base + SHARED_DATA_HEADER_SIZE;
-#endif /* BOOT_DATA_AVAILABLE */
+    #endif /* BOOT_DATA_AVAILABLE */
 
     /* Add header to output buffer as well */
     if (buf_size < SHARED_DATA_HEADER_SIZE) {
         args[0] = (uint32_t)PSA_ERROR_INVALID_ARGUMENT;
         return;
-    } else {
+    }
+    else {
         TFM_COVERITY_DEVIATE_LINE(MISRA_C_2023_Rule_11_3, "Intentional pointer cast");
-        boot_data = (struct tfm_boot_data *)buf_start;
+        boot_data = (struct tfm_boot_data*)buf_start;
         boot_data->header.tlv_magic   = SHARED_DATA_TLV_INFO_MAGIC;
         boot_data->header.tlv_tot_len = SHARED_DATA_HEADER_SIZE;
     }
 
-#ifdef BOOT_DATA_AVAILABLE
+    #ifdef BOOT_DATA_AVAILABLE
     ptr = boot_data->data;
+
     /* Iterates over the TLV section and copy TLVs with requested major
      * type to the provided buffer.
      */
     for (; offset < tlv_end; offset += next_tlv_offset) {
         /* Create local copy to avoid unaligned access */
         TFM_COVERITY_DEVIATE_LINE(MISRA_C_2023_Rule_11_6, "Intentional pointer cast")
-        (void)spm_memcpy(&tlv_entry, (const void *)offset,
+        (void)spm_memcpy(&tlv_entry, (void const*)offset,
                          SHARED_DATA_ENTRY_HEADER_SIZE);
 
         next_tlv_offset = SHARED_DATA_ENTRY_HEADER_SIZE + tlv_entry.tlv_len;
@@ -240,12 +240,12 @@ void tfm_core_get_boot_data_handler(uint32_t args[])
             }
 
             TFM_COVERITY_DEVIATE_LINE(MISRA_C_2023_Rule_11_6, "Intentional pointer cast")
-            (void)spm_memcpy(ptr, (const void *)offset, next_tlv_offset);
+            (void)spm_memcpy(ptr, (void const*)offset, next_tlv_offset);
             ptr += next_tlv_offset;
             boot_data->header.tlv_tot_len += next_tlv_offset;
         }
     }
-#endif /* BOOT_DATA_AVAILABLE */
+    #endif /* BOOT_DATA_AVAILABLE */
 
     args[0] = (uint32_t)PSA_SUCCESS;
     return;

@@ -198,15 +198,19 @@ macro(add_convert_to_bin_target target)
         ALL SOURCES ${bin_dir}/${target}.bin
         SOURCES ${bin_dir}/${target}.elf
         SOURCES ${bin_dir}/${target}.hex
+        SOURCES ${bin_dir}/${target}.lst
     )
 
     add_custom_command(OUTPUT ${bin_dir}/${target}.bin
         OUTPUT ${bin_dir}/${target}.elf
         OUTPUT ${bin_dir}/${target}.hex
+        OUTPUT ${bin_dir}/${target}.lst
         DEPENDS ${target}
         COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${target}> ${bin_dir}/${target}.bin
         COMMAND ${CMAKE_OBJCOPY} -O elf32-littlearm $<TARGET_FILE:${target}> ${bin_dir}/${target}.elf
         COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${target}> ${bin_dir}/${target}.hex
+        # CUSTOM@NDRS: disassembly listing next to the bin/elf/hex, like the Zephyr app's .lst
+        COMMAND ${CMAKE_OBJDUMP} -d -S $<TARGET_FILE:${target}> > ${bin_dir}/${target}.lst
     )
 
     add_imported_target(${target}_hex ${target}_bin "${bin_dir}/${target}.hex")

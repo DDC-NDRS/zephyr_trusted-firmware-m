@@ -27,8 +27,7 @@
 
 static uintptr_t g_spm_boundary;
 
-static fih_ret tfm_core_init(void)
-{
+static fih_ret tfm_core_init(void) {
     enum tfm_plat_err_t plat_err = TFM_PLAT_ERR_SYSTEM_ERR;
     FIH_DECLARE(fih_rc, FIH_FAILURE);
     bool provisioning_required;
@@ -41,12 +40,13 @@ static fih_ret tfm_core_init(void)
     if (FIH_NOT_EQ(fih_rc, TFM_HAL_SUCCESS)) {
         FIH_RET(SPM_ERROR_GENERIC);
     }
-#ifdef TFM_FIH_PROFILE_ON
+
+    #ifdef TFM_FIH_PROFILE_ON
     FIH_CALL(tfm_hal_verify_static_boundaries, fih_rc);
     if (FIH_NOT_EQ(fih_rc, TFM_HAL_SUCCESS)) {
         tfm_core_panic();
     }
-#endif
+    #endif
 
     FIH_CALL(tfm_hal_platform_init, fih_rc);
     if (FIH_NOT_EQ(fih_rc, TFM_HAL_SUCCESS)) {
@@ -57,8 +57,8 @@ static fih_ret tfm_core_init(void)
      * Print the TF-M version and timestamp now that the platform
      * has initialized the logging backend.
      */
-    NOTICE("Booting TF-M \033[1;34m"VERSION_FULLSTR"\033[0m\n");
-    NOTICE("Built \033[1;34m"BUILD_TIMESTAMP" UTC\033[0m\n");
+    NOTICE("Booting TF-M \033[1;34m" VERSION_FULLSTR "\033[0m\n");
+    NOTICE("Built \033[1;34m" BUILD_TIMESTAMP " UTC\033[0m\n");
 
     plat_err = tfm_plat_otp_init();
     if (plat_err != TFM_PLAT_ERR_SUCCESS) {
@@ -100,18 +100,25 @@ static fih_ret tfm_core_init(void)
     FIH_RET(SPM_SUCCESS);
 }
 
-uintptr_t get_spm_boundary(void)
-{
+uintptr_t get_spm_boundary(void) {
     assert(g_spm_boundary != 0);
 
     return g_spm_boundary;
 }
 
-int main(void)
-{
-#ifdef CONFIG_TFM_ENABLE_PROFILING
+/**
+ * @brief Entry point for the secure firmware main function. (tfm_main)
+ *
+ * This function performs the initial setup and configuration for the
+ * secure firmware, including architecture configuration, stack limits,
+ * and platform-specific initialization.
+ *
+ * @retval 0  Function completed successfully.
+ */
+int /**/main(void) {
+    #ifdef CONFIG_TFM_ENABLE_PROFILING
     PROFILING_INIT();
-#endif
+    #endif
 
     FIH_DECLARE(fih_rc, FIH_FAILURE);
 
@@ -137,16 +144,16 @@ int main(void)
      */
     tfm_arch_set_secure_exception_priorities();
 
-#ifdef TFM_FIH_PROFILE_ON
+    #ifdef TFM_FIH_PROFILE_ON
     /* Check secure exception priority */
     FIH_CALL(tfm_arch_verify_secure_exception_priorities, fih_rc);
     if (FIH_NOT_EQ(fih_rc, FIH_SUCCESS)) {
-         tfm_core_panic();
+        tfm_core_panic();
     }
-#endif
+    #endif
 
     /* Further SPM initialization. */
     BACKEND_SPM_INIT();
 
-    return 0;
+    return (0);
 }
