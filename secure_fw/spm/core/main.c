@@ -78,7 +78,8 @@ static fih_ret tfm_core_init(void) {
         }
     }
 
-    TFM_COVERITY_DEVIATE_LINE(MISRA_C_2023_Rule_2_2, "Parameters can be changed by user and this code will make effect")
+    TFM_COVERITY_DEVIATE_LINE(MISRA_C_2023_Rule_2_2,
+                              "Parameters can be changed by user and this code will make effect")
     tfm_plat_provisioning_check_for_dummy_keys();
 
     /* Configures architecture */
@@ -86,14 +87,14 @@ static fih_ret tfm_core_init(void) {
 
     VERBOSE("Isolation level is: %u\n", TFM_ISOLATION_LEVEL);
 
-#if (CONFIG_TFM_FLOAT_ABI == 2)
+    #if (CONFIG_TFM_FLOAT_ABI == 2)
     INFO("Float ABI: Hard, Lazy stacking ");
-#ifdef CONFIG_TFM_LAZY_STACKING
+    #ifdef CONFIG_TFM_LAZY_STACKING
     INFO_RAW("enabled\n");
-#else
+    #else
     INFO_RAW("disabled\n");
-#endif
-#endif
+    #endif
+    #endif
 
     tfm_core_validate_boot_data();
 
@@ -122,7 +123,8 @@ int /**/main(void) {
 
     FIH_DECLARE(fih_rc, FIH_FAILURE);
 
-    TFM_COVERITY_DEVIATE_LINE(MISRA_C_2023_Rule_2_2, "Parameters can be changed by user and this code will make effect")
+    TFM_COVERITY_DEVIATE_LINE(MISRA_C_2023_Rule_2_2,
+                              "Parameters can be changed by user and this code will make effect")
     tfm_arch_config_branch_protection();
 
     /* set Main Stack Pointer limit */

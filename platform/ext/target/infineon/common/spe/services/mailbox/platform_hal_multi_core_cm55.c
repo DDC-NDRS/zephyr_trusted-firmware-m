@@ -49,7 +49,7 @@
 #if (DOMAIN_S) || (IFX_MTB_MAILBOX && IFX_NS_INTERFACE_TZ)
 void tfm_hal_boot_ns_cpu(uintptr_t start_addr)
 {
-    printf("Starting Cortex-M55 at 0x%x\r\n", start_addr);
+    printf("Starting Cortex-M55 at 0x%lx\r\n", start_addr);
     Cy_SysEnableCM55(IFX_MXCM55, start_addr, CY_SYS_CORE_WAIT_INFINITE);
 
 #ifdef TFM_FIH_PROFILE_ON

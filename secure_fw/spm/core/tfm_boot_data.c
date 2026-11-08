@@ -29,7 +29,7 @@
  * \brief Indicates that shared data between bootloader and runtime firmware was
  *        passed the sanity check with success.
  */
-#define BOOT_DATA_VALID (1u)
+#define BOOT_DATA_VALID (1U)
 
 /*!
  * \def BOOT_DATA_INVALID
@@ -37,7 +37,7 @@
  * \brief Indicates that shared data between bootloader and runtime firmware was
  *        failed on sanity check.
  */
-#define BOOT_DATA_INVALID (0u)
+#define BOOT_DATA_INVALID (0U)
 
 /*!
  * \var is_boot_data_valid
