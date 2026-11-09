@@ -37,6 +37,14 @@ target_compile_definitions(platform_s
         $<$<BOOL:${IFX_MTB_BUILD}>:IFX_MTB_BUILD=1>
 )
 
+# CUSTOM@NDRS: cycfg_system.c keeps the M55 (PC 6) out of the M33 NS RAM (RAM) and out of the peripherals that only the
+# M33 uses (PERIPH) when these are set (dual-core build)
+target_compile_definitions(tfm_spm
+    PRIVATE
+        $<$<BOOL:${BCU_MV25_M33_RAM_ISOLATED}>:BCU_MV25_M33_RAM_ISOLATED=1>
+        $<$<BOOL:${BCU_MV25_M33_PERIPH_ISOLATED}>:BCU_MV25_M33_PERIPH_ISOLATED=1>
+)
+
 ######################### Install non secure interface #########################
 
 # MTB uses own system for design files thus no need to install them
